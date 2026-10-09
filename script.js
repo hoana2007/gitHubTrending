@@ -1102,6 +1102,6 @@ window.addEventListener("resize", () => {
    ========================================================= */
 initTheme();
 applyTranslations();
-els.langBtn.textContent = currentLang === "vi" ? "🇻🇳" : "EN";
+els.langBtn.textContent = currentLang === "vi" ? "🇻🇳" : "🇬🇧";
 initThreeJS();
 fetchTrends();
