@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GitHub Trends Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="site-header">
+    <div class="container navbar">
+      <div class="logo">
+        <span class="logo-mark">🚀</span>
+        <span data-i18n="logo">GitHub<span class="logo-accent">Trends</span></span>
+      </div>
+
+      <div class="header-actions">
+        <div class="search-box">
+          <input type="text" id="search-input" data-i18n-ph="search" placeholder="Tìm repo..." />
+          <span class="search-icon">🔍</span>
+        </div>
+        <button class="btn btn-icon" id="btn-lang" title="Switch language">VN</button>
+        <button class="btn btn-icon" id="btn-theme" title="Đổi chế độ sáng/tối">
+          <span id="theme-icon">🌙</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== FILTER BAR ===================== -->
+  <section class="filter-bar">
+    <div class="container filter-inner">
+      <div class="filter-group">
+        <label data-i18n="filter_language">Ngôn ngữ</label>
+        <select id="filter-language">
+          <option value="" data-i18n="all">Tất cả</option>
+          <option value="javascript">JavaScript</option>
+          <option value="python">Python</option>
+          <option value="typescript">TypeScript</option>
+          <option value="go">Go</option>
+          <option value="rust">Rust</option>
+          <option value="java">Java</option>
+          <option value="c++">C++</option>
+          <option value="c#">C#</option>
+          <option value="php">PHP</option>
+          <option value="ruby">Ruby</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label data-i18n="filter_period">Khoảng thời gian</label>
+        <select id="filter-period">
+          <option value="7" data-i18n="7days">7 ngày</option>
+          <option value="30" selected data-i18n="30days">30 ngày</option>
+          <option value="90" data-i18n="3months">3 tháng</option>
+          <option value="365" data-i18n="1year">1 năm</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label data-i18n="filter_topic">Topic</label>
+        <select id="filter-topic">
+          <option value="" data-i18n="all">Tất cả</option>
+          <option value="ai" data-i18n="ai_ml">AI / ML</option>
+          <option value="web" data-i18n="web">Web</option>
+          <option value="mobile" data-i18n="mobile">Mobile</option>
+          <option value="devops" data-i18n="devops">DevOps</option>
+          <option value="database" data-i18n="database">Database</option>
+          <option value="game" data-i18n="game">Game</option>
+          <option value="cli" data-i18n="cli">CLI</option>
+          <option value="framework" data-i18n="framework">Framework</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label data-i18n="filter_sort">Sắp xếp</label>
+        <select id="filter-sort">
+          <option value="stars" data-i18n="stars">⭐ Stars</option>
+          <option value="forks" data-i18n="forks">🍴 Forks</option>
+          <option value="updated" data-i18n="newest">🕐 Mới nhất</option>
+        </select>
+      </div>
+
+      <div class="filter-actions">
+        <button class="btn btn-outline" id="btn-compare" title="So sánh khoảng thời gian" data-i18n="compare">📈 Compare</button>
+        <button class="btn btn-outline" id="btn-export" title="Xuất CSV" data-i18n="csv">⬇ CSV</button>
+        <button class="btn btn-primary" id="btn-refresh" data-i18n="refresh">🔄 Làm mới</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== MAIN ===================== -->
+  <main class="container main-grid">
+
+    <!-- ==== CARD: Stats Overview ==== -->
+    <section class="card stat-card">
+      <div class="stat-icon">⭐</div>
+      <div class="stat-label" data-i18n="total_stars">Tổng Stars</div>
+      <div class="stat-value" id="stat-stars">—</div>
+      <div class="stat-trend" id="stat-stars-trend">—</div>
+      <svg class="sparkline" id="spark-stars"></svg>
+    </section>
+
+    <section class="card stat-card">
+      <div class="stat-icon">🍴</div>
+      <div class="stat-label" data-i18n="total_forks">Tổng Forks</div>
+      <div class="stat-value" id="stat-forks">—</div>
+      <div class="stat-trend" id="stat-forks-trend">—</div>
+      <svg class="sparkline" id="spark-forks"></svg>
+    </section>
+
+    <section class="card stat-card">
+      <div class="stat-icon">📦</div>
+      <div class="stat-label" data-i18n="repo_count">Số Repo</div>
+      <div class="stat-value" id="stat-count">—</div>
+      <div class="stat-trend text-muted" data-i18n="current_filter">Kết quả lọc hiện tại</div>
+      <svg class="sparkline" id="spark-count"></svg>
+    </section>
+
+    <section class="card stat-card">
+      <div class="stat-icon">🌐</div>
+      <div class="stat-label" data-i18n="top_lang">Ngôn ngữ top</div>
+      <div class="stat-value" id="stat-lang">—</div>
+      <div class="stat-trend text-muted" data-i18n="most_common">Chiếm nhiều nhất</div>
+      <svg class="sparkline" id="spark-lang"></svg>
+    </section>
+
+    <!-- ==== BUBBLE DASHBOARD (3D) — 70% width ==== -->
+    <section class="card card-bubble">
+      <header class="card-header">
+        <div>
+          <h3 class="card-title" data-i18n="trending_repos">Xu hướng Repo</h3>
+          <p class="card-sub" data-i18n="bubble_hint">Kích thước = Stars • Màu = Ngôn ngữ • Kéo để xoay</p>
+        </div>
+        <div class="legend" id="legend"></div>
+      </header>
+
+      <div class="bubble-wrapper">
+        <canvas id="bubble-canvas"></canvas>
+        <div id="loading" class="loading" data-i18n="loading">Đang tải dữ liệu…</div>
+        <div id="error" class="error"></div>
+      </div>
+    </section>
+
+    <!-- ==== REPO LIST — 30% width ==== -->
+    <aside class="card card-list">
+      <header class="card-header">
+        <div>
+          <h3 class="card-title" data-i18n="repo_list">Danh sách Repo</h3>
+          <p class="card-sub" id="repo-count">0 kết quả</p>
+        </div>
+      </header>
+      <div class="repo-items" id="repo-items"></div>
+    </aside>
+
+    <!-- ==== LINE CHART: Compare periods ==== -->
+    <section class="card card-line" id="compare-card" hidden>
+      <header class="card-header">
+        <div>
+          <h3 class="card-title" data-i18n="compare_title">So sánh khoảng thời gian</h3>
+          <p class="card-sub" data-i18n="compare_sub">Stars theo ngày cho 7d / 30d / 90d</p>
+        </div>
+        <button class="btn btn-soft btn-sm" id="btn-close-compare" data-i18n="close">✕ Đóng</button>
+      </header>
+      <div class="line-wrapper">
+        <svg id="line-chart"></svg>
+      </div>
+      <div class="line-legend" id="line-legend"></div>
+    </section>
+
+    <!-- ==== LANGUAGE BREAKDOWN (donut) ==== -->
+    <section class="card card-donut">
+      <header class="card-header">
+        <h3 class="card-title" data-i18n="lang_distribution">Phân bố ngôn ngữ</h3>
+      </header>
+      <svg id="donut-chart"></svg>
+    </section>
+
+  </main>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="site-footer">
+    <div class="container footer-bottom">
+      <span data-i18n="footer">© 2026 GitHub Trends Dashboard - hoana2007</span>
+      <span class="text-muted" data-i18n="footer_tech">Powered by Three.js & D3.js & GitHub API</span>
+    </div>
+  </footer>
+
+  <!-- Tooltip -->
+  <div id="tooltip"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
