@@ -165,7 +165,7 @@ function toggleLanguage() {
   currentLang = currentLang === "vi" ? "en" : "vi";
   localStorage.setItem("ght_lang", currentLang);
   applyTranslations();
-  document.getElementById("btn-lang").textContent = currentLang === "vi" ? "VN" : "EN";
+  document.getElementById("btn-lang").textContent = currentLang === "vi" ? "🇻🇳" : "🇬🇧";
   if (state.repos.length) {
     renderAll();
   }
